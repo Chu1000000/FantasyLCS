@@ -1,0 +1,92 @@
+/***
+	Styles
+
+	@project LoL Fantasy LCS
+	@author A.Chu
+	@date July-2014
+**/
+
+body {
+	padding: 5px;
+	margin: 0px;
+	border: 0px;
+
+	text-align:center;
+}
+
+#data {
+	width:75%;
+	display:block;
+	float:left;
+	padding: 2px;
+	margin: 1px;
+	border: 1px solid white;
+}
+
+#perma, #loading {
+	text-align:left;
+	width:100%;
+	background-color: #BBBBBB;
+}
+
+.column {
+	padding: 2px;
+	margin: 1px;
+	display: block;
+	float: left;
+	border: 1px solid white;
+
+	width: 20%;
+	height: 100%;
+
+	background-color: #CBCBFF;
+}
+
+.row {
+	padding: 2px;
+	margin: 1px;
+	display: block;
+	float:left;
+	border: 1px solid white;
+	width:100%;
+}
+
+.data_wide {
+	width: 15%;
+}
+
+.data_narrow {
+	width: 5%;
+}
+
+td {
+	text-align:center;
+}
+
+a, a:link, a:hover, a:visited, a:active {
+	color: #000000;
+	text-decoration: none;
+}
+
+.search_result {
+	width: 100%;
+	display: block;
+	background-color: #CBCBFF;
+}
+
+.search_result:hover {
+	background-color: #FFFFFF;
+}
+
+.search_result_list {
+	width:100%;
+	background-color: #CBCBFF;
+}
+
+.search_box {
+	width: 85%;
+}
+
+.search_button {
+	width: 10%;
+}
