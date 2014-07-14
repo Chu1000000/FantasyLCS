@@ -234,7 +234,7 @@ function draw_table($table)
 		echo sprintf("<td>%s (%d)</td>",  $table['for'][$player] / 100, find_rank($table, $player, 'for', DESC));
 		echo sprintf("<td>%s (%d)</td>",$table['against'][$player]/100, find_rank($table, $player, 'against', ASC));
 		echo sprintf("<td>%s (%d)</td>", ($table['for'][$player] - $table['against'][$player])/100, find_rank($table, $player, 'diff', DESC));
-		echo sprintf("<td>%d (%d)</td></tr>", $table['rank'][$player], find_rank($table, $player, 'rank', DESC));
+		echo sprintf("<td>%s (%d)</td></tr>", round($table['rank'][$player] / count($table),1), find_rank($table, $player, 'rank', DESC));
 	}
 
 	echo '</table>';
@@ -247,6 +247,9 @@ function draw_table($table)
 </head>
 
 <body>
+<div style="position:fixed; top:0px; right:0px; background-color:#DDDDDD"><a href="#finish">Finishing Standings</a> | <a href="#table">Current Table</a> | <a href="#graphs">Graphs</a></div>
+
+<div id="finish">
 <h2>Finishing Standings</h2>
 
 <p>Walking through all possible combinations of the remaining matchups, the % probability of finishing in each position is given below (combinations that result in given position/all possible combinations):</p>
@@ -316,7 +319,8 @@ foreach ($sum as $player => $position_a)
 ?>
 
 </table></p>
-
+</div>
+<div id="table">
 <h2>Fantasy LCS Table</h2>
 
 <p>
@@ -334,7 +338,7 @@ foreach ($sum as $player => $position_a)
 </p>
 
 <?php
-function graph($type, $data, $precision, $legend = '', $colours = '') // Min, Max, Step
+function graph($type, $data, $precision, $intercept = null, $legend = '', $colours = '') // Min, Max, Step
 {
 	global $weeks_complete;
 
@@ -348,6 +352,11 @@ function graph($type, $data, $precision, $legend = '', $colours = '') // Min, Ma
 	}
 
 	$bot = floor($min - $precision);
+	if (isset($intercept))
+	{
+		$bot -= ($bot % $precision) - $intercept;
+	}
+
 	$max = ceil($max + $precision);
 	foreach ($data as $id=>$row) {
 		$point .= ($id == 0) ? '' : '|';
@@ -363,10 +372,11 @@ function graph($type, $data, $precision, $legend = '', $colours = '') // Min, Ma
 	$x_axis = '1,' . $weeks_complete . ',1';
 	$y_axis = $bot . ',' . $max . ',' . $precision;
 	
-	echo '<img src="https://chart.googleapis.com/chart?cht=' . $type . '&chg=' . round((100 / 6),1) . ',' . round((100/($max - $bot) * $precision * 2),1) . '&chs=400x250&chd=t:' . $point . '&chxt=x,y'  . $colours . $legend . '&chxr=0,' . $x_axis . '|1,' . $y_axis . '" />';
+	echo '<img src="https://chart.googleapis.com/chart?cht=' . $type . '&chg=' . round((100 / 6),1) . ',' . round((100/($max - $bot) * $precision),1) . '&chs=400x250&chd=t:' . $point . '&chxt=x,y'  . $colours . $legend . '&chxr=0,' . $x_axis . '|1,' . $y_axis . '" />';
 }
 ?>
-
+</div>
+<div id="graphs">
 <h2>Graphs</h2>
 <?php 	
 
@@ -396,18 +406,69 @@ foreach ($data as $week=>$scores)
 	{
 		$pts_array[$i][$week - 1] += $data[$j+1][$i];
 	}
-	$go_array[$i][$week - 1] = round(($pts_array[$i][$week - 1] - ($total / 6)) / $matches / 7 / 100, 2);
+	$go_array[$i][$week - 1] = round(($pts_array[$i][$week - 1] - ($total / 6)) / 100, 2);
 
 	}
 }
-echo '<div><h3>Total Point Comparison to Average</h3>';
+echo '<div><h3>Total Point Comparison to Total League Average</h3>';
 
-graph('lc', $go_array, 0.5, 'Chu|Sam|Cody|Toj|Scott|Jimmy', 'FF0000,00FF00,0000FF,FFFF00,FF00FF,00FFFF');
+graph('lc', $go_array, 50, 0, 'Chu|Sam|Cody|Toj|Scott|Jimmy', 'FF0000,00FF00,0000FF,000000,FF00FF,00FFFF');
 
 echo '</div>';
 
+$diff_array = array();
+for ($i = 0; $i < $weeks_complete; $i++)
+{
+	$blank = array();
+	for ($k = $i+1; $k < $weeks_complete; $k++)
+	{
+		for ($m = 0; $m < 6; $m++)
+		{
+			$blank[$k+1][$m] = 0;
+		}
+	}
+	
+	for ($j = 0; $j < 6; $j++)
+	{
+		$table = generate_table($blank);
 
+		$diff_array[$j][$i] = ($table['for'][$j] - $table['against'][$j])/100;
+	}
+}
+echo '<div><h3>Total Point Difference Comparison</h3>';
+
+graph('lc', $diff_array, 20, 0, 'Chu|Sam|Cody|Toj|Scott|Jimmy', 'FF0000,00FF00,0000FF,000000,FF00FF,00FFFF');
+
+echo '</div>';
+
+$rank_array = array();
+for ($i = 0; $i < $weeks_complete; $i++)
+{
+	$blank = array();
+	for ($k = $i+1; $k < $weeks_complete; $k++)
+	{
+		for ($m = 0; $m < 6; $m++)
+		{
+			$blank[$k+1][$m] = 0;
+		}
+	}
+	
+	for ($j = 0; $j < 6; $j++)
+	{
+		$table = generate_table($blank);
+
+		$diff_array[$j][$i] = $table['rank'][$j] / ($i + 1);
+	}
+}
+echo '<div><h3>Rankings</h3>';
+
+graph('lc', $diff_array, 0.5, null, 'Chu|Sam|Cody|Toj|Scott|Jimmy', 'FF0000,00FF00,0000FF,000000,FF00FF,00FFFF');
+
+echo '</div>';
 
 ?>
+
+</div>
+
 </body>
 </html>
