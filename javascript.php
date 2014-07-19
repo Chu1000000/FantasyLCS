@@ -33,7 +33,6 @@ function add (type, id) {
 
     
     var list = document.getElementById("data").getElementsByClassName("remove");
-    alert (list.length);
     for (i=0; i < list.length; i++) {
       childNode=list[i];
       if (childNode.href == '?')
@@ -59,7 +58,7 @@ function add (type, id) {
       }
 
       document.getElementById(type + "_" + id).innerHTML = xmlhttp.responseText;
-      document.getElementById("remove_" + type + "_" + id).href = old_get.replace(/&amp;/g, "&");
+      document.getElementById("remove_" + type + "_" + id).href = "?" + old_get.replace(/&amp;/g, "&");
     }
     }
 
