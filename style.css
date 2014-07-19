@@ -84,9 +84,9 @@ a, a:link, a:hover, a:visited, a:active {
 }
 
 .search_box {
-	width: 85%;
+	width: 100%;
 }
 
 .search_button {
-	width: 10%;
+	width: 100%;
 }

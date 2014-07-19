@@ -125,11 +125,11 @@ foreach ($record as $name => $data)
 }
 
 echo sprintf ('
-	<span class="data_title">%s (<a href="?%s" />Remove</a>)<span>
+	<span class="data_title">%s (<a class="remove" id="remove_%s_%d" href="?%s" />Remove</a>)<span>
 
 	<table>
 	<tr>
-	<td class="data_wide">Versus</td>', $data_name, active_get($player_id, $team_id));
+	<td class="data_wide">Versus</td>', $data_name, ($mode == 'p') ? 'p' : 't', ($mode == 'p') ? $player_id : $team_id, active_get($player_id, $team_id));
 
 foreach ($blank_record as $field)
 {
