@@ -375,11 +375,14 @@ function get_matchups ($split, $player1, $player2)
 			{
 				if (($matchup == $match_string1) || ($matchup == $match_string2))
 				{
-					$g_matchups[$count][1] = $data[$split][$week][$player1];
-					$g_matchups[$count][2] = $data[$split][$week][$player2];
-					$g_matchups[$count][3] = $pro_matches[$split][$week];
+					if (isset($data[$split][$week][$player1]) && isset($data[$split][$week][$player2]))
+					{
+						$g_matchups[$count][1] = $data[$split][$week][$player1];
+						$g_matchups[$count][2] = $data[$split][$week][$player2];
+						$g_matchups[$count][3] = $pro_matches[$split][$week];
 
-					$count++;
+						$count++;
+					}
 				}
 			}
 		}
@@ -533,6 +536,54 @@ function finishing_probability ($s_split = 0, $s_week = 0)
 		}
 	}
 	return $sum;
+}
+
+function find_elo()
+{
+	global $data, $matchups, $names;
+
+	$elo = array();
+
+	$default = 1200;
+
+	$K = 25;
+
+	$correct_prediction = 0;
+
+
+	foreach ($names as $id => $name)
+	{
+			$elo[$id] = $default;
+	}
+
+	foreach ($matchups as $split => $s_matchup)
+	{
+		foreach ($s_matchup as $week => $w_matchup)
+		{
+			foreach ($w_matchup as $id => $matchup)
+			{
+				$people = split('-', $matchup);
+
+				$expectation = 1 / (1 + pow(10, ($elo[$people[1]] - $elo[$people[0]])/400));
+
+				if (isset($data[$split][$week][$people[0]]) && isset($data[$split][$week][$people[1]]))
+				{
+					$score = array($data[$split][$week][$people[0]], $data[$split][$week][$people[1]]);
+
+					if (($score[0] > 0) && ($score[1] > 0))
+					{
+						// Match played
+						$result = ($score[0] > $score[1]) ? array(1, 0) : (($score[0] < $score[1]) ? array(0,1) : array(0.5, 0.5));
+
+						$elo[$people[0]] += intval($K * ($result[0] - $expectation));
+						$elo[$people[1]] += intval($K * ($result[1] - (1 - $expectation)));
+					}	
+				}
+			}
+		}
+	}	
+
+	return $elo;
 }
 
 // Output Page
@@ -1104,7 +1155,9 @@ $ui_display = (isset($_GET['display'])) ? (in_array($_GET['display'], $display) 
 
 		}
 
+		$table['elo'] = find_elo();
 		$positions = sort_table($table, array('splits' => DESC, 'win_ratio' => DESC, 'draws' => DESC, 'for' => DESC, 'against' => DESC, 'id' => ASC));
+
 		// Draw
 		echo '<table style="width:100%; text-align: center;">';
 		asort($positions);
@@ -1115,7 +1168,7 @@ $ui_display = (isset($_GET['display'])) ? (in_array($_GET['display'], $display) 
 		echo '<tr><td style="width:15%">Name</td>';
 		echo ($ui_split == 0) ? '<td style="width:5%">Splits</td><td style="width:5%">Lasts</td>' : '';
 		echo ($ui_split == 0) ? '<td style="width:5%">Avg.Finish</td>' : '<td style="width:5%">Pos</td>';
-		echo '<td style="width:5%">Win %</td><td style="width:5%">W-T-L</td><td style="width:5%">F</td><td style="width:5%">A</td><td style="width:5%">PD</td><td style="width:5%">Rank (%)</td></tr>';
+		echo '<td style="width:5%">Win %</td><td style="width:5%">W-T-L</td><td style="width:5%">F</td><td style="width:5%">A</td><td style="width:5%">PD</td><td style="width:5%">Rank (%)</td><td style="width:5%">ELO</td></tr>';
 		echo "\n";
 
 		foreach ($positions as $position=>$player)
@@ -1129,7 +1182,8 @@ $ui_display = (isset($_GET['display'])) ? (in_array($_GET['display'], $display) 
 			echo sprintf("<td>%s (%d)</td>",  $table['for'][$player] / 100, find_rank($table, $player, 'for', DESC));
 			echo sprintf("<td>%s (%d)</td>",$table['against'][$player]/100, find_rank($table, $player, 'against', DESC));
 			echo sprintf("<td>%s (%d)</td>", ($table['for'][$player] - $table['against'][$player])/100, find_rank($table, $player, 'diff', DESC));
-			echo sprintf("<td>%s (%d)</td></tr>", $table['rank'][$player] / 100, find_rank($table, $player, 'rank', DESC));
+			echo sprintf("<td>%s (%d)</td>", $table['rank'][$player] / 100, find_rank($table, $player, 'rank', DESC));
+			echo sprintf("<td>%s (%d)</td></tr>", $table['elo'][$player], find_rank($table, $player, 'elo', DESC));
 			echo "\n";
 		}
 
